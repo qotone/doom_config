@@ -105,3 +105,5 @@
 (package! lsp-ui)
 (package! company-lsp)
 ;; (package! ccls)
+(package! projectile)
+(package! eglot)

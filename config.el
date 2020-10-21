@@ -80,6 +80,27 @@
 ;; ;; (define-key global-map [remap execute-extended-command] #'helm-M-x)
 ;; ;; (define-key global-map [remap switch-to-buffer] #'helm-mini)
 
+(defun dd/projectile-proj-find-function (dir)
+  (let ((root (projectile-project-root dir)))
+    (and root (cons 'transient root))))
+
+(use-package eglot
+  :ensure t)
+
+(defun dd/cpp-eglot-enable ()
+  "enable variables and hooks for eglot cpp IDE"
+  (interactive)
+  (setq company-backends
+        (cons 'company-capf
+              (remove 'company-capf company-backends)))
+  (with-eval-after-load 'project
+    (add-to-list 'project-find-functions
+                 'dd/projectile-proj-find-function))
+  (add-to-list 'eglot-server-programs
+               `((c++-mode) ,ddavis-clangd-exe))
+  (add-hook 'c++-mode-hook 'eglot-ensure))
+
+
 (which-key-mode)
 (add-hook 'c-mode-hook 'lsp)
 (add-hook 'cpp-mode-hook 'lsp)
