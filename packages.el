@@ -89,7 +89,9 @@
 ;;
 ;;
 ;; from luoyang
-(disable-packages! cmake-mode company-irony company-irony-c-headers flycheck-irony irony irony-eldoc ivy-rtags rtags)
+;; cmake-mode
+
+(disable-packages! company-irony company-irony-c-headers flycheck-irony irony irony-eldoc ivy-rtags rtags)
 (package! lsp-mode)
 (package! yasnippet)
 (package! lsp-treemacs)
@@ -107,3 +109,6 @@
 ;; (package! ccls)
 (package! projectile)
 (package! eglot)
+(package! clang-format)
+(package! cmake-mode)
+(package! modern-cpp-font-lock)

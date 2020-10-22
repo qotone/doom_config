@@ -72,33 +72,13 @@
 ;;          (lambda () (require 'ccls) (lsp))))
 ;; (setq ccls-executable "/home/luoyang/App/ccls/bin/ccls")
 
-
+;;  below from :https://emacs-lsp.github.io/lsp-mode/tutorials/CPP-guide/
 ;; sample `helm' configuration use https://github.com/emacs-helm/helm/ for details
 ;; (helm-mode)
 (require 'helm-xref)
 ;; ;; (define-key global-map [remap find-file] #'helm-find-files)
 ;; ;; (define-key global-map [remap execute-extended-command] #'helm-M-x)
 ;; ;; (define-key global-map [remap switch-to-buffer] #'helm-mini)
-
-(defun dd/projectile-proj-find-function (dir)
-  (let ((root (projectile-project-root dir)))
-    (and root (cons 'transient root))))
-
-(use-package eglot
-  :ensure t)
-
-(defun dd/cpp-eglot-enable ()
-  "enable variables and hooks for eglot cpp IDE"
-  (interactive)
-  (setq company-backends
-        (cons 'company-capf
-              (remove 'company-capf company-backends)))
-  (with-eval-after-load 'project
-    (add-to-list 'project-find-functions
-                 'dd/projectile-proj-find-function))
-  (add-to-list 'eglot-server-programs
-               `((c++-mode) ,ddavis-clangd-exe))
-  (add-hook 'c++-mode-hook 'eglot-ensure))
 
 
 (which-key-mode)
@@ -118,3 +98,68 @@
   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
   ;; (require 'dap-cpptools)
   (yas-global-mode))
+
+;; from my-cc
+
+(use-package! clang-format
+  :commands (clang-format-region)
+  )
+
+(after! cc-mode
+  (c-add-style
+   "radare2"
+   '((c-basic-offset . 4)
+     (indent-tabs-mode . t)
+     (c-auto-align-backslashes . nil)
+     (c-offsets-alist
+      (arglist-intro . ++)
+      (arglist-cont . ++)
+      (arglist-cont-nonempty . ++)
+      (statement-cont . ++)
+      )))
+  (c-add-style
+   "my-cc" '("user"
+             (c-basic-offset . 2)
+             (c-offsets-alist
+              . ((innamespace . 0)
+                 (access-label . -)
+                 (case-label . 0)
+                 (member-init-intro . +)
+                 (topmost-intro . 0)
+                 (arglist-cont-nonempty . +)))))
+
+  (setq c-default-style "my-cc")
+
+  (add-to-list 'auto-mode-alist '("\\.inc\\'" . +cc-c-c++-objc-mode))
+  )
+
+;; from web for commemt lines :https://stackoverflow.com/questions/4549015/in-c-c-mode-in-emacs-change-face-of-code-in-if-0-endif-block-to-comment-f
+(defun my-c-mode-font-lock-if0 (limit)
+  (save-restriction
+    (widen)
+    (save-excursion
+      (goto-char (point-min))
+      (let ((depth 0) str start start-depth)
+        (while (re-search-forward "^\\s-*#\\s-*\\(if\\|else\\|endif\\)" limit 'move)
+          (setq str (match-string 1))
+          (if (string= str "if")
+              (progn
+                (setq depth (1+ depth))
+                (when (and (null start) (looking-at "\\s-+0"))
+                  (setq start (match-end 0)
+                        start-depth depth)))
+            (when (and start (= depth start-depth))
+              (c-put-font-lock-face start (match-beginning 0) 'font-lock-comment-face)
+              (setq start nil))
+            (when (string= str "endif")
+              (setq depth (1- depth)))))
+        (when (and start (> depth 0))
+          (c-put-font-lock-face start (point) 'font-lock-comment-face)))))
+  nil)
+
+(defun my-c-mode-common-hook ()
+  (font-lock-add-keywords
+   nil
+   '((my-c-mode-font-lock-if0 (0 font-lock-comment-face prepend))) 'add-to-end))
+
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
